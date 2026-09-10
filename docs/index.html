@@ -288,7 +288,7 @@
         <a href="#how"><span>04</span>どうやって直す？</a><a href="#test"><span>05</span>テストの仕組み</a>
         <a href="#results"><span>06</span>実測と20本の中身</a>
         <a href="#usage"><span>07</span>使い方</a>
-        <a href="#reports"><span>08</span>実際の報告</a>
+        <a href="#entries"><span>08</span>2つの入口</a><a href="#reports"><span>09</span>実際の報告</a>
       </nav>
     </section>
 
@@ -566,8 +566,79 @@ return broken ? ch.normalize('NFKC') : ch;</code></pre>
       <aside class="note"><strong>直したあとも、同じテストで確かめられます。</strong>抽出に使う道具を更新したときなどに、もう一度実行できます。CI（プログラムの変更時に、自動で検査する仕組み）に組み込む使い方も考えられます。ただし、このテストをCIで使って再発を止めている人の報告は、現時点で見つかっていません。実際にどれだけ役立っているかは、まだ分かっていません。</aside>
     </section>
 
+    <section id="entries" class="section" aria-labelledby="entries-heading">
+      <div class="section-head"><span class="section-no">08</span><h2 id="entries-heading">手元で回すか、<br>送って採点してもらうか。</h2></div>
+      <p class="section-intro">入口は2つあります。<strong>ふだんは CLI です。</strong>Web API は、抽出した結果を送って採点してもらうためのものです。</p>
+
+      <div class="diagram">
+        <svg viewBox="0 0 560 400" role="img" aria-labelledby="entries-title"><title id="entries-title">CLIは抽出プログラムを自分で実行する。Web APIは送られた結果を採点するだけ</title>
+          <text x="14" y="22" class="small blue bold">CLI（ふだんはこちら）</text>
+          <rect x="14" y="34" width="242" height="46" rx="8" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
+          <text x="135" y="54" text-anchor="middle" class="small">テストデータ 20本</text>
+          <text x="135" y="71" text-anchor="middle" class="small muted">check.py が読む</text>
+          <path d="M135 86v24m-7-7 7 7 7-7" class="arrow"/>
+          <rect x="14" y="116" width="242" height="46" rx="8" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
+          <text x="135" y="136" text-anchor="middle" class="small">あなたの抽出プログラム</text>
+          <text x="135" y="153" text-anchor="middle" class="small green">CLI が実行する</text>
+          <path d="M135 168v24m-7-7 7 7 7-7" class="arrow"/>
+          <rect x="14" y="198" width="242" height="46" rx="8" fill="none" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="135" y="218" text-anchor="middle" class="small">採点</text>
+          <text x="135" y="235" text-anchor="middle" class="mono small muted">終了コード 0 / 1</text>
+
+          <line x1="280" y1="26" x2="280" y2="250" stroke="var(--line)" stroke-width="1"/>
+
+          <text x="304" y="22" class="small blue bold">Web API（NestJS）</text>
+          <rect x="304" y="34" width="242" height="46" rx="8" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <text x="425" y="54" text-anchor="middle" class="small">あなたの抽出プログラム</text>
+          <text x="425" y="71" text-anchor="middle" class="small muted">自分で動かす</text>
+          <path d="M425 86v24m-7-7 7 7 7-7" class="arrow"/>
+          <rect x="304" y="116" width="242" height="46" rx="8" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
+          <text x="425" y="136" text-anchor="middle" class="small">抽出できた文字を送る</text>
+          <text x="425" y="153" text-anchor="middle" class="mono small muted">POST /check</text>
+          <path d="M425 168v24m-7-7 7 7 7-7" class="arrow"/>
+          <rect x="304" y="198" width="242" height="46" rx="8" fill="none" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="425" y="218" text-anchor="middle" class="small">採点</text>
+          <text x="425" y="235" text-anchor="middle" class="mono small muted">結果を JSON で返す</text>
+
+          <text x="14" y="288" class="small muted">Web API は、抽出プログラムを実行しません。送られた結果を見るだけです。</text>
+          <rect x="14" y="308" width="532" height="56" rx="8" fill="none" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="280" y="332" text-anchor="middle" class="small green bold">採点の中身はどちらも同じ。</text>
+          <text x="280" y="352" text-anchor="middle" class="small green">基準ファイル（expected.json）も同じ。</text>
+        </svg>
+      </div>
+
+      <div class="split">
+        <div>
+          <h3>CLI</h3>
+          <p class="caption">抽出プログラムを実行して、手元やCIで繰り返し確かめる。Python の標準ライブラリだけで動きます。</p>
+          <pre><code>./check.py --cmd "python3 my_extract.py {file}"</code></pre>
+        </div>
+        <div>
+          <h3>Web API</h3>
+          <p class="caption">抽出できた文字を送ると、採点して返します。ブラウザから試すときや、既存のWebツールからつなぐときに。</p>
+          <pre><code>curl -X POST localhost:3100/check \
+  -H 'content-type: application/json' \
+  -d '{"file":"K01_…pdf","text":"⼈事評価制度の…"}'</code></pre>
+        </div>
+      </div>
+
+      <h3>「抽出できなかった」は、空の文字ではなく合図で送る。</h3>
+      <p class="prose">読めなかったときは <code>{"file":"…","failed":true}</code> を送ります。空の文字を送ると「0文字で成功した」と採点されます。<strong><code>text</code> と <code>failed</code> の同時指定は断ります。</strong>抽出できたのかできなかったのかが決まらないからです。</p>
+      <p class="caption"><code>failed</code> は<strong>送り手の申告</strong>です。このサーバが抽出を試したわけではありません。その断り書きは応答にも入っています。</p>
+
+      <h3>3本だけ送って「20本合格」に見えないようにする。</h3>
+      <p class="prose">まとめて採点したとき、<strong>送らなかったものは名前が返ります</strong>（<code>notSubmitted</code>）。黙って母数から外しません。</p>
+
+      <div class="takeaway"><svg viewBox="0 0 50 50" aria-hidden="true"><circle cx="25" cy="25" r="22" fill="none" stroke="var(--green)" stroke-width="2"/><path d="m13 25 8 8 16-17" stroke="var(--green)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><p>2つの採点結果は一致します。<br>実測で確かめています。</p></div>
+      <pre><code>WEB : 合格 6 / 不合格 14 / 未実施 0
+CLI : 合格 6 / 不合格 14
+一致: ✅（落ちたファイルの集合も同一）</code></pre>
+
+      <p class="caption"><strong>実装</strong>: Web API は <strong>NestJS</strong>（TypeScript）です。CLI は Python の標準ライブラリだけ。採点そのもの（<code>CheckService</code>）は HTTP を知りません。CLI と同じ4種類の判定を、同じ基準ファイル（<code>expected.json</code>）で行います。<strong>機能を足すことより、2つの結果が一致していることを優先しています。</strong></p>
+    </section>
+
     <section id="reports" class="section" aria-labelledby="reports-heading">
-      <div class="section-head"><span class="section-no">08</span><h2 id="reports-heading">同じ問題は、実際に報告されています。</h2></div>
+      <div class="section-head"><span class="section-no">09</span><h2 id="reports-heading">同じ問題は、実際に報告されています。</h2></div>
       <div class="reports">
         <article class="report">
           <div class="report-label"><strong>検索での体験</strong>Qiita / nobunori47</div>
