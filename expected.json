@@ -1,0 +1,277 @@
+{
+  "version": 1,
+  "note": "各 fixture が何を証明するか。expect の意味は README を参照。must_not_contain_cp は tools/derive.py が実ファイルから導く",
+  "fixtures": [
+    {
+      "file": "K01_康熙部首_人_U+2F08.pdf",
+      "group": "kangxi",
+      "why": "「人」が U+2F08（康熙部首）。53文字返るが「人事」で検索できない",
+      "expect": {
+        "must_find": [
+          "人事",
+          "見直し"
+        ],
+        "must_not_contain_cp": [
+          "2F08",
+          "2F8F",
+          "2F92"
+        ]
+      }
+    },
+    {
+      "file": "K02_康熙部首_金_U+2F2F.pdf",
+      "group": "kangxi",
+      "why": "「金」が U+2F2F。金額の項目名が引けない",
+      "expect": {
+        "must_find": [
+          "金額",
+          "入金"
+        ],
+        "must_not_contain_cp": [
+          "2F0A",
+          "2F47",
+          "2F49",
+          "2FA6"
+        ]
+      }
+    },
+    {
+      "file": "K03_康熙部首_複数混在.pdf",
+      "group": "kangxi",
+      "why": "康熙部首と通常の漢字が同じ文書に混ざる。一部だけ引ける状態が一番気づきにくい",
+      "expect": {
+        "must_find": [
+          "会議",
+          "議事",
+          "車両"
+        ],
+        "must_not_contain_cp": [
+          "2F8F",
+          "2F92",
+          "2F9E"
+        ]
+      }
+    },
+    {
+      "file": "K04_CJK互換漢字_神_U+FA19.txt",
+      "group": "compat",
+      "why": "CJK互換漢字 U+FA19。旧システムやIMEから入る。**PDF生成では消えるので実物はテキストで置く**",
+      "expect": {
+        "must_find": [
+          "神谷",
+          "神奈川"
+        ],
+        "must_not_contain_cp": [
+          "FA19"
+        ]
+      }
+    },
+    {
+      "file": "K05_CJK部首補助_U+2E8C.pdf",
+      "group": "kangxi",
+      "why": "CJK部首補助（U+2E80-2EFF）。康熙部首とは別ブロックだが症状は同じ",
+      "expect": {
+        "must_find": [
+          "乙"
+        ],
+        "must_not_contain_cp": [
+          "2F04"
+        ],
+        "known_unfixable_cp": [
+          "2E8C"
+        ]
+      }
+    },
+    {
+      "file": "Z01_全角括弧_消費税別.pdf",
+      "group": "zenkaku",
+      "why": "NFKC を掛けると（消費税別）が(消費税別)になる。原文と一致しなくなる",
+      "expect": {
+        "must_find": [
+          "人事"
+        ],
+        "must_keep": [
+          "（消費税別）"
+        ],
+        "must_not_contain_cp": [
+          "2F08",
+          "2F49",
+          "2F64"
+        ]
+      }
+    },
+    {
+      "file": "Z02_全角数字_口座番号.pdf",
+      "group": "zenkaku",
+      "why": "NFKC を掛けると１２３４５６７が1234567になる。突合が崩れる",
+      "expect": {
+        "must_find": [
+          "振込先"
+        ],
+        "must_keep": [
+          "１２３４５６７",
+          "００１"
+        ],
+        "must_not_contain_cp": [
+          "2F1D",
+          "2F40"
+        ]
+      }
+    },
+    {
+      "file": "Z03_全角英字_型番.pdf",
+      "group": "zenkaku",
+      "why": "NFKC を掛けると型番の全角英字が半角になる。製品コードが変わる",
+      "expect": {
+        "must_find": [
+          "数量"
+        ],
+        "must_keep": [
+          "ＡＢ－１２０"
+        ]
+      }
+    },
+    {
+      "file": "D01_半角カナ濁点_ガ.pdf",
+      "group": "dakuten",
+      "why": "ｶ+ﾞ を1文字ずつ直すと カ+U+3099 の分解形になり「ガ」(U+30AC)で一致しない",
+      "expect": {
+        "must_find": [
+          "ガス",
+          "ボイラ"
+        ],
+        "must_not_contain_cp": [
+          "2F4C",
+          "2F8F",
+          "FF70",
+          "FF72",
+          "FF76",
+          "FF7D",
+          "FF8E",
+          "FF97",
+          "FF9E"
+        ]
+      }
+    },
+    {
+      "file": "D02_半角カナ半濁点_パ.pdf",
+      "group": "dakuten",
+      "why": "ﾊ+ﾟ の半濁点。濁点と別のコードポイント（U+309A）",
+      "expect": {
+        "must_find": [
+          "パスワード"
+        ],
+        "must_not_contain_cp": [
+          "2F49",
+          "FF70",
+          "FF7D",
+          "FF84",
+          "FF8A",
+          "FF9C",
+          "FF9E",
+          "FF9F"
+        ]
+      }
+    },
+    {
+      "file": "N01_スキャン_テキスト層なし.pdf",
+      "group": "no-text",
+      "why": "スキャン原稿。pypdf も pdfplumber も空文字を返す（例外なし・警告なし）",
+      "expect": {
+        "must_fail": true
+      }
+    },
+    {
+      "file": "N02_スキャン_2ページ.pdf",
+      "group": "no-text",
+      "why": "複数ページのスキャン。1ページ目だけ見て判断すると取りこぼす",
+      "expect": {
+        "must_fail": true
+      }
+    },
+    {
+      "file": "N03_混在_1ページ目だけ画像.pdf",
+      "group": "no-text",
+      "why": "表紙だけ画像、本文はテキスト層あり。**全体が空でないので気づきにくい**",
+      "expect": {
+        "must_find": [
+          "テキスト層があります"
+        ],
+        "must_not_contain_cp": [
+          "2F42"
+        ]
+      }
+    },
+    {
+      "file": "B01_ゼロバイト.pdf",
+      "group": "broken",
+      "why": "0バイト。空文字で成功にしてはいけない",
+      "expect": {
+        "must_fail": true
+      }
+    },
+    {
+      "file": "B02_拡張子詐称_中身はPDF.docx",
+      "group": "broken",
+      "why": "名前は .docx・中身は PDF。拡張子を信じると読めない",
+      "expect": {
+        "must_find": [
+          "はPDFですが",
+          "docx"
+        ]
+      }
+    },
+    {
+      "file": "B03_途中で切れたPDF.pdf",
+      "group": "broken",
+      "why": "末尾が欠けたPDF。ダウンロード失敗などで実際に起きる",
+      "expect": {
+        "must_fail": true
+      }
+    },
+    {
+      "file": "E01_CP932_社内通知.csv",
+      "group": "encoding",
+      "why": "Excel が既定で吐く CP932。UTF-8 前提だと化ける",
+      "expect": {
+        "must_find": [
+          "稟議",
+          "総務部"
+        ]
+      }
+    },
+    {
+      "file": "E02_EUCJP_システム出力.txt",
+      "group": "encoding",
+      "why": "EUC-JP。**Shift_JIS として読むと置換文字が出ないまま半角カナの羅列になる**",
+      "expect": {
+        "must_find": [
+          "処理結果報告",
+          "再実行"
+        ]
+      }
+    },
+    {
+      "file": "E03_UTF16LE_BOM_打合せメモ.txt",
+      "group": "encoding",
+      "why": "メモ帳の「Unicode」保存。BOM を見ずに推測すると化ける",
+      "expect": {
+        "must_find": [
+          "打合せメモ",
+          "一次案"
+        ]
+      }
+    },
+    {
+      "file": "E04_ISO2022JP_base64_定例連絡.eml",
+      "group": "encoding",
+      "why": "ISO-2022-JP + base64。符号を解いたあとに charset を当てないと制御文字が残る",
+      "expect": {
+        "must_find": [
+          "定例",
+          "4月17日"
+        ]
+      }
+    }
+  ]
+}
