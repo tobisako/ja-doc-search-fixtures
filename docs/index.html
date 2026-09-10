@@ -402,13 +402,14 @@ len(text)        <span class="code-comment"># 53</span>
     </section>
 
     <section id="how" class="section" aria-labelledby="how-heading">
-      <div class="section-head"><span class="section-no">04</span><h2 id="how-heading">直す範囲は自分で決め、<br>直し方はUnicodeに任せる。</h2></div>
+      <div class="section-head"><span class="section-no">04</span><h2 id="how-heading">直す文字は、<br>Unicodeが決めたグループから選ぶ。</h2></div>
       <p class="section-intro"><strong>テストデータの「20本」は、ファイルの本数です。直せる文字の数ではありません。</strong>直す仕組みのほうは、<strong>康熙部首214文字すべて</strong>に対応しています。</p>
-      <p class="prose">「そっくりな文字」を1つずつ手で書き並べているわけではありません。<strong>Unicode が公式に持っている変換表（NFKC）を、範囲を限定して使います。</strong>どこを直すかだけを自分で決め、何に直すかは Unicode に任せます。</p>
+      <p class="prose">「そっくりな文字」を1つずつ手で書き並べているわけではありません。<strong>Unicode は、文字を用途ごとのグループに分けています。</strong>「康熙部首のグループ」「半角カタカナのグループ」といった具合です。このグループ分けも、何をどの文字に直すかも、<strong>すべて Unicode が決めています。</strong></p>
+      <p class="prose">こちらがすることは1つだけです。<strong>そのグループの中から、直すものを選ぶ。</strong>選んだグループの文字だけ、Unicode の変換表（NFKC）に通します。</p>
 
       <div class="diagram">
         <svg viewBox="0 0 720 330" role="img" aria-labelledby="how-title"><title id="how-title">文字の番号が5つの範囲に入っていれば直す。入っていなければ触らない</title>
-          <text x="16" y="26" class="small muted">文字の番号（コードポイント）を見る</text>
+          <text x="16" y="26" class="small muted">その文字が、どのグループの文字かを見る</text>
           <rect x="16" y="44" width="330" height="34" rx="6" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
           <text x="30" y="67" class="mono small blue">U+2E80 – U+2EFF</text><text x="196" y="67" class="small">CJK部首補助</text>
           <rect x="16" y="86" width="330" height="34" rx="6" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
@@ -419,7 +420,7 @@ len(text)        <span class="code-comment"># 53</span>
           <text x="30" y="193" class="mono small blue">U+FE30 – U+FE4F</text><text x="196" y="193" class="small">CJK互換形（縦書き用）</text>
           <rect x="16" y="212" width="330" height="34" rx="6" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
           <text x="30" y="235" class="mono small blue">U+FF61 – U+FF9F</text><text x="196" y="235" class="small">半角カタカナ</text>
-          <text x="16" y="278" class="small muted">この5つの範囲に入っていたら</text>
+          <text x="16" y="278" class="small muted">この5つのグループに入っていたら</text>
           <text x="16" y="304" class="mono small green">NFKC で直す</text>
           <path d="M362 145h44m-8-8 8 8-8 8" class="arrow"/>
           <rect x="418" y="44" width="286" height="118" rx="8" fill="none" stroke="var(--green)" stroke-width="1.5"/>
@@ -431,10 +432,10 @@ len(text)        <span class="code-comment"># 53</span>
           <text x="561" y="252" text-anchor="middle" style="font-size:26px" class="bold">（１２３） そのまま</text>
           <text x="561" y="282" text-anchor="middle" class="mono small muted">触らない</text>
         </svg>
-        <p class="caption">全角の括弧（U+FF08）も全角の数字（U+FF10〜U+FF19）も、この5つの範囲の外です。だから変わりません。半角カタカナ（U+FF61〜U+FF9F）だけが範囲に入っています。</p>
+        <p class="caption">全角の括弧（U+FF08）も全角の数字（U+FF10〜U+FF19）も、選んだ5つのグループの外です。だから変わりません。半角カタカナ（U+FF61〜U+FF9F）だけが範囲に入っています。</p>
       </div>
 
-      <p class="prose">実際のコードは、これだけです。「この番号の範囲なら直す」と書いてあるだけで、<strong>どの文字が何になるかは1つも書いていません。</strong></p>
+      <p class="prose">実際のコードは、これだけです。「この番号のグループなら直す」と書いてあるだけで、<strong>どの文字が何になるかは1つも書いていません。</strong></p>
       <pre><code>const cp = ch.codePointAt(0);
 const broken =
   (cp &gt;= 0x2e80 &amp;&amp; cp &lt;= 0x2eff) ||  // CJK部首補助
@@ -445,9 +446,9 @@ const broken =
 
 return broken ? ch.normalize('NFKC') : ch;</code></pre>
 
-      <h3>対象は 896文字。そのうち 769文字が直ります。</h3>
+      <h3>選んだ5つのグループは、あわせて 896文字。そのうち 769文字が直ります。</h3>
       <div class="breakdown"><table>
-        <thead><tr><th>ブロック</th><th>定義済み</th><th>NFKCで直る</th><th>直らない</th></tr></thead>
+        <thead><tr><th>文字のグループ</th><th>定義済み</th><th>NFKCで直る</th><th>直らない</th></tr></thead>
         <tbody>
           <tr><td>CJK部首補助</td><td class="mono">115</td><td class="mono">2</td><td class="mono">113</td></tr>
           <tr><td><strong>康熙部首</strong></td><td class="mono">214</td><td class="mono green"><strong>214</strong></td><td class="mono">0</td></tr>
@@ -459,7 +460,7 @@ return broken ? ch.normalize('NFKC') : ch;</code></pre>
       </table></div>
       <p class="caption">Python 3.14 の <code>unicodedata</code> で数えた実測値です。<strong>康熙部首は214文字すべて、半角カタカナは63文字すべてが直ります。</strong>参考実装に214文字と63文字を1つずつ通して、全部変換できることを確認しています。<strong>20本のテストデータは抜き取り検査であって、対応表そのものではありません。</strong></p>
 
-      <p class="caption">直らない127文字のうち113文字は CJK部首補助です（<code>U+2E8C（⺌）</code>など）。<strong>Unicode に対応表がないため、NFKC では誰も直せません。</strong>このテストでは <code>known_unfixable_cp</code> として記録し、合否の判定に使いません。</p>
+      <p class="caption">直らない127文字のうち113文字は CJK部首補助のグループです（<code>U+2E8C（⺌）</code>など）。<strong>Unicode に対応表がないため、NFKC では誰も直せません。</strong>このテストでは <code>known_unfixable_cp</code> として記録し、合否の判定に使いません。</p>
     </section>
 
     <section id="test" class="section" aria-labelledby="test-heading">
