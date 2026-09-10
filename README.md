@@ -8,6 +8,8 @@
 ./check.py --cmd "python3 my_extract.py {file}"
 ```
 
+**図でわかる解説 → https://tobisako.github.io/ja-doc-search-fixtures/**
+
 ---
 
 ## こんな人に使ってほしい
